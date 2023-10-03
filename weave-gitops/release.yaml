@@ -1,0 +1,40 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  annotations:
+    metadata.weave.works/description: This is the Weave GitOps Dashboard.  It provides
+      a simple way to get insights into your GitOps workloads.
+  name: weave-gitops
+spec:
+  chart:
+    spec:
+      chart: weave-gitops
+      sourceRef:
+        kind: HelmRepository
+        name: weave-gitops
+  interval: 5m
+  values:
+    adminUser:
+      create: true
+      passwordHash: ${admin_password_hash}
+      username: ${admin_username}
+    oidcSecret:
+      create: true
+      clientID: ${oidc_client_id}
+      clientSecret: ${oidc_client_secret}
+      issuerURL: https://${dex_domain}
+      redirectURL: https://${weave_gitops_domain}/oauth2/callback
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      hosts:
+      - host: ${weave_gitops_domain}
+        paths:
+        - path: /
+          pathType: ImplementationSpecific
+      tls:
+      - secretName: ${weave_gitops_domain_secret_name}
+        hosts:
+        - ${weave_gitops_domain}
